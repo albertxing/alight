@@ -136,12 +136,12 @@ func post(w http.ResponseWriter, r *http.Request) {
 func main() {
 	isNew := false
 
-	_, err := os.Open("./foo.db")
+	_, err := os.Open("./alight.db")
 	if err != nil {
 		isNew = true
 	}
 
-	db, err = sql.Open("sqlite3", "./foo.db")
+	db, err = sql.Open("sqlite3", "./alight.db")
 	defer db.Close()
 
 	if isNew {
@@ -152,7 +152,7 @@ func main() {
 
 		_, err = db.Exec(sqlStmt)
 		if err != nil {
-			os.Remove("./foo.db")
+			os.Remove("./alight.db")
 			log.Printf("%q: %s\n", err, sqlStmt)
 			return
 		}
