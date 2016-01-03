@@ -110,7 +110,7 @@ func post(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("avid")
 
 		if err != nil {
-			result, err := visitorsStmt.Exec(r.RemoteAddr, r.FormValue("referrer"))
+			result, err := visitorsStmt.Exec(r.RemoteAddr)
 
 			if err != nil {
 				log.Print(err)
@@ -124,7 +124,7 @@ func post(w http.ResponseWriter, r *http.Request) {
 			id = int64(id_s)
 		}
 
-		_, err = visitStmt.Exec(id)
+		_, err = visitStmt.Exec(r.FormValue("url"), r.FormValue("referrer"), id)
 
 		if err != nil {
 			log.Print(err)
@@ -146,8 +146,8 @@ func main() {
 
 	if isNew {
 		sqlStmt := `
-		create table visits (id integer primary key, time integer, visitor integer);
-		create table visitors (id integer primary key, location text, ip text, referrer text);
+		create table visits (id integer primary key, url text, time integer, referrer text, visitor integer);
+		create table visitors (id integer primary key, location text, ip text);
 		`
 
 		_, err = db.Exec(sqlStmt)
@@ -160,11 +160,11 @@ func main() {
 
 	db.Exec("pragma synchronous = OFF")
 
-	visitorsStmt, err = db.Prepare("insert into visitors values (null, 'Vancouver', ?, ?)")
+	visitorsStmt, err = db.Prepare("insert into visitors values (null, 'Vancouver', ?)")
 	if err != nil {
 		log.Fatal(err)
 	}
-	visitStmt, err = db.Prepare("insert into visits values (null, datetime('now'), ?);")
+	visitStmt, err = db.Prepare("insert into visits values (null, ?, datetime('now'), ?, ?);")
 	if err != nil {
 		log.Fatal(err)
 	}
