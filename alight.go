@@ -69,7 +69,7 @@ func get(w http.ResponseWriter) {
 func getCount(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	rows, err := db.Query("select count(id), strftime(\"%Y-%m-%d %H:%M:00\", datetime(time, 'localtime')) from visits where time > datetime('now', '-100 minutes') group by strftime(\"%Y%j%H%M\", time);")
+	rows, err := db.Query("select count(id), strftime(\"%Y-%m-%d %H:%M:00\", datetime(time, 'localtime')) from visits where time > datetime('now', '-1000 hours') group by strftime(\"%Y%j%H\", time);")
 	if err != nil {
 		log.Fatal(err)
 	}
