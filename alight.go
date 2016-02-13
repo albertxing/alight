@@ -191,7 +191,7 @@ func main() {
 
 	db.Exec("pragma synchronous = OFF")
 
-	visitorsStmt, err = db.Prepare("insert into visitors values (null, '?', ?)")
+	visitorsStmt, err = db.Prepare("insert into visitors values (null, ?, ?)")
 	if err != nil {
 		log.Fatal(err)
 	}
