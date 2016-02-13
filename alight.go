@@ -1,12 +1,15 @@
 package main
 
 import (
+	"strings"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/oschwald/geoip2-golang"
 	"log"
 	"net/http"
+	"net"
 	"os"
 	"strconv"
 )
@@ -110,7 +113,8 @@ func post(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("avid")
 
 		if err != nil {
-			result, err := visitorsStmt.Exec(r.RemoteAddr)
+			ip := strings.Split(r.RemoteAddr, ":")[0]
+			result, err := visitorsStmt.Exec(geo(ip), ip)
 
 			if err != nil {
 				log.Print(err)
@@ -131,6 +135,22 @@ func post(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+}
+
+func geo(ipstring string) string {
+    db, err := geoip2.Open("GeoLite2-City.mmdb")
+    if err != nil {
+            log.Fatal(err)
+    }
+    defer db.Close()
+    // If you are using strings that may be invalid, check that ip is not nil
+    ip := net.ParseIP(ipstring)
+    record, err := db.City(ip)
+    if err != nil {
+            log.Fatal(err)
+    }
+
+	return record.City.Names["en"] + " " + record.Country.IsoCode
 }
 
 func main() {
@@ -160,7 +180,7 @@ func main() {
 
 	db.Exec("pragma synchronous = OFF")
 
-	visitorsStmt, err = db.Prepare("insert into visitors values (null, 'Vancouver', ?)")
+	visitorsStmt, err = db.Prepare("insert into visitors values (null, '?', ?)")
 	if err != nil {
 		log.Fatal(err)
 	}
