@@ -72,22 +72,15 @@ func get(w http.ResponseWriter) {
 func getCount(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	rows, err := db.Query("select count(id), strftime(\"%Y-%m-%d %H:00:00\", datetime(time, 'localtime')) from visits where time > datetime('now', '-1000 hours') group by strftime(\"%Y%j%H\", time);")
+	rows, err := db.Query("select count(id), strftime(\"%Y-%m-%d %H:00:00\", datetime(time, 'localtime')) from visits where time > datetime('now', '-500 hours') group by strftime(\"%Y%j%H\", time);")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer rows.Close()
 
-	// fmt.Fprint(w, "[")
-	// first := true
+	result := map[string][]map[string]string{}
 	counts := []map[string]string{}
 	for rows.Next() {
-		// if first {
-		// 	first = false
-		// } else {
-		// 	fmt.Fprint(w, ",")
-		// }
-
 		var count string
 		var time string
 
@@ -96,11 +89,29 @@ func getCount(w http.ResponseWriter) {
 			"time": time,
 			"count": count,
 			})
-		// fmt.Fprintf(w, "{\"time\":\"%s UTC\",\"count\":%s}", time, count)
 	}
-	b, _ := json.Marshal(counts)
+	result["counts"] = counts;
+
+	lrows, err := db.Query("select count(location), location from visitors group by location;")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer lrows.Close()
+	locations := []map[string]string{}
+	for lrows.Next() {
+		var count string
+		var location string
+
+		lrows.Scan(&count, &location)
+		locations = append(locations, map[string]string{
+			"location": location,
+			"count": count,
+			})
+	}
+	result["locations"] = locations;
+
+	b, _ := json.Marshal(result)
 	fmt.Fprintf(w, string(b))
-	// fmt.Fprint(w, "]")
 
 	rows.Close()
 }
