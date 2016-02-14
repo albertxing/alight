@@ -54,7 +54,7 @@ func get(w http.ResponseWriter) {
 	}
 	result["counts"] = counts
 
-	lrows, err := db.Query("select count(location), location from visitors group by location;")
+	lrows, err := db.Query("select count(city), city, country, iso from visitors group by city, iso;")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -62,12 +62,16 @@ func get(w http.ResponseWriter) {
 	locations := []map[string]string{}
 	for lrows.Next() {
 		var count string
-		var location string
+		var city string
+		var country string
+		var iso string
 
-		lrows.Scan(&count, &location)
+		lrows.Scan(&count, &city, &country, &iso)
 		locations = append(locations, map[string]string{
-			"location": location,
-			"count":    count,
+			"city": city,
+			"country": country,
+			"iso": iso,
+			"count": count,
 		})
 	}
 	result["locations"] = locations
@@ -157,7 +161,7 @@ func main() {
 	if isNew {
 		sqlStmt := `
 		create table visits (id integer primary key, url text, time integer, referrer text, vid integer, foreign key(vid) references visitors(vid));
-		create table visitors (vid integer primary key, city text, country text, countryCode text, ip text);
+		create table visitors (vid integer primary key, city text, country text, iso text, ip text);
 		`
 
 		_, err = db.Exec(sqlStmt)
