@@ -1,4 +1,4 @@
-var preq = new XMLHttpRequest();
+(function () {var preq = new XMLHttpRequest();
 preq.open("post", "http://192.168.1.200:8000/");
 preq.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 preq.onload = function () {
@@ -16,4 +16,4 @@ window.onbeforeunload = function () {
 	preq.open("post", "http://192.168.1.200:8000", true);
 	preq.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 	preq.send("action=leave");
-}
+})();
