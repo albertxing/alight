@@ -1,15 +1,14 @@
 package main
 
 import (
-	"strings"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/oschwald/geoip2-golang"
 	"log"
-	"net/http"
 	"net"
+	"net/http"
 	"os"
 	"strconv"
 )
@@ -19,57 +18,20 @@ var visitorsStmt *sql.Stmt
 var visitStmt *sql.Stmt
 
 type Visit struct {
-	timse string
+	timse    string
 	location string
-	ip string
+	ip       string
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" || r.Method == "" {
-		getCount(w)
+		get(w)
 	} else if r.Method == "POST" {
 		post(w, r)
 	}
 }
 
 func get(w http.ResponseWriter) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-
-	rows, err := db.Query("select datetime(time, 'localtime'), location, ip from visits, visitors where visits.visitor = visitors.id;")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
-
-	visits := []Visit{}
-
-	// fmt.Fprint(w, "[")
-	// first := true
-	for rows.Next() {
-		// if first {
-		// 	first = false
-		// } else {
-		// 	fmt.Fprint(w, ",")
-		// }
-
-		var time string
-		var location string
-		var ip string
-
-		rows.Scan(&time, &location, &ip)
-		v := Visit{time, location, ip}
-		visits = append(visits, v)
-
-		// fmt.Fprintf(w, "{\"time\":\"%s\",\"location\":\"%s\",\"ip\":\"%s\"}", time, location, ip)
-	}
-	// fmt.Fprint(w, "]")
-	b, _ := json.Marshal(visits)
-	fmt.Fprint(w, b)
-
-	rows.Close()
-}
-
-func getCount(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	rows, err := db.Query("select count(id), strftime(\"%Y-%m-%d %H:00:00\", datetime(time, 'localtime')) from visits where time > datetime('now', '-500 hours') group by strftime(\"%Y%j%H\", time);")
@@ -86,11 +48,11 @@ func getCount(w http.ResponseWriter) {
 
 		rows.Scan(&count, &time)
 		counts = append(counts, map[string]string{
-			"time": time,
+			"time":  time,
 			"count": count,
-			})
+		})
 	}
-	result["counts"] = counts;
+	result["counts"] = counts
 
 	lrows, err := db.Query("select count(location), location from visitors group by location;")
 	if err != nil {
@@ -105,10 +67,10 @@ func getCount(w http.ResponseWriter) {
 		lrows.Scan(&count, &location)
 		locations = append(locations, map[string]string{
 			"location": location,
-			"count": count,
-			})
+			"count":    count,
+		})
 	}
-	result["locations"] = locations;
+	result["locations"] = locations
 
 	b, _ := json.Marshal(result)
 	fmt.Fprintf(w, string(b))
@@ -121,25 +83,32 @@ func post(w http.ResponseWriter, r *http.Request) {
 
 	if r.FormValue("action") == "enter" {
 		var id int64
-		cookie, err := r.Cookie("avid")
+		avid := r.FormValue("avid")
 
-		if err != nil {
-			ip := strings.Split(r.RemoteAddr, ":")[0]
-			result, err := visitorsStmt.Exec(geo(ip), ip)
+		if avid == "" {
+			host, _, _ := net.SplitHostPort(r.RemoteAddr)
+			if host != "" {
+				gr := geo(host)
+				result, err := visitorsStmt.Exec(gr["city"], gr["country"], gr["iso"], host)
 
-			if err != nil {
-				log.Print(err)
-				return
+				if err != nil {
+					log.Print(err)
+					return
+				}
+
+				id, _ = result.LastInsertId()
+				response := map[string]string{}
+				response["vid"] = strconv.FormatInt(id, 10)
+
+				rj, _ := json.Marshal(response)
+				fmt.Fprintf(w, string(rj))
 			}
-
-			id, _ = result.LastInsertId()
-			//fmt.Println(id)
 		} else {
-			id_s, _ := strconv.Atoi(cookie.Value)
+			id_s, _ := strconv.Atoi(avid)
 			id = int64(id_s)
 		}
 
-		_, err = visitStmt.Exec(r.FormValue("url"), r.FormValue("referrer"), id)
+		_, err := visitStmt.Exec(r.FormValue("url"), r.FormValue("referrer"), id)
 
 		if err != nil {
 			log.Print(err)
@@ -148,20 +117,30 @@ func post(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func geo(ipstring string) string {
-    db, err := geoip2.Open("GeoLite2-City.mmdb")
-    if err != nil {
-            log.Fatal(err)
-    }
-    defer db.Close()
-    // If you are using strings that may be invalid, check that ip is not nil
-    ip := net.ParseIP(ipstring)
-    record, err := db.City(ip)
-    if err != nil {
-            log.Fatal(err)
-    }
+func geo(ipstring string) map[string]string {
+	db, err := geoip2.Open("GeoLite2-City.mmdb")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+	ip := net.ParseIP(ipstring)
+	if ip != nil {
+		record, err := db.City(ip)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return map[string]string{
+			"city":    record.City.Names["en"],
+			"country": record.Country.Names["en"],
+			"iso":     record.Country.IsoCode,
+		}
+	}
 
-	return record.City.Names["en"] + " " + record.Country.IsoCode
+	return map[string]string{
+		"city":    "",
+		"country": "",
+		"iso":     "",
+	}
 }
 
 func main() {
@@ -177,8 +156,8 @@ func main() {
 
 	if isNew {
 		sqlStmt := `
-		create table visits (id integer primary key, url text, time integer, referrer text, visitor integer);
-		create table visitors (id integer primary key, location text, ip text);
+		create table visits (id integer primary key, url text, time integer, referrer text, vid integer, foreign key(vid) references visitors(vid));
+		create table visitors (vid integer primary key, city text, country text, countryCode text, ip text);
 		`
 
 		_, err = db.Exec(sqlStmt)
@@ -191,7 +170,7 @@ func main() {
 
 	db.Exec("pragma synchronous = OFF")
 
-	visitorsStmt, err = db.Prepare("insert into visitors values (null, ?, ?)")
+	visitorsStmt, err = db.Prepare("insert into visitors values (null, ?, ?, ?, ?)")
 	if err != nil {
 		log.Fatal(err)
 	}
