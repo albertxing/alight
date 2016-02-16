@@ -93,7 +93,7 @@ func post(w http.ResponseWriter, r *http.Request) {
 			host, _, _ := net.SplitHostPort(r.RemoteAddr)
 			if host != "" {
 				gr := geo(host)
-				result, err := visitorsStmt.Exec(gr["city"], gr["country"], gr["iso"], host)
+				result, err := visitorsStmt.Exec(gr["city"], gr["country"], gr["iso"], host, r.UserAgent())
 
 				if err != nil {
 					log.Print(err)
@@ -160,8 +160,8 @@ func main() {
 
 	if isNew {
 		sqlStmt := `
-		create table visits (id integer primary key, url text, time integer, referrer text, vid integer, foreign key(vid) references visitors(vid));
-		create table visitors (vid integer primary key, city text, country text, iso text, ip text);
+		create table visits (id integer primary key, url text, time integer, referrer text, vid integer references visitors);
+		create table visitors (vid integer primary key, city text, country text, iso text, ip text, ua text);
 		`
 
 		_, err = db.Exec(sqlStmt)
@@ -174,7 +174,7 @@ func main() {
 
 	db.Exec("pragma synchronous = OFF")
 
-	visitorsStmt, err = db.Prepare("insert into visitors values (null, ?, ?, ?, ?)")
+	visitorsStmt, err = db.Prepare("insert into visitors values (null, ?, ?, ?, ?, ?)")
 	if err != nil {
 		log.Fatal(err)
 	}
