@@ -86,7 +86,9 @@ func get(w http.ResponseWriter) {
 func post(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	if (Contains(r.UserAgent(), "Googlebot")) return
+	if Contains(r.UserAgent(), "Googlebot") {
+		return
+	}
 
 	if r.FormValue("action") == "enter" {
 		var id int64
