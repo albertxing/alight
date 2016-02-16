@@ -149,10 +149,10 @@ func geo(ipstring string) map[string]string {
 }
 
 func update(w http.ResponseWriter, r *http.Request) {
-	cmd := exec.Command("update")
+	cmd := exec.Command("./update")
 	err := cmd.Start()
 	if err != nil {
-		fmt.Fprintln(w,err)
+		fmt.Fprintln(w, err)
 	} else {
 		os.Exit(0);
 	}
