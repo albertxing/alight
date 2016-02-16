@@ -152,7 +152,7 @@ func update(w http.ResponseWriter, r *http.Request) {
 	cmd := exec.Command("update")
 	err := cmd.Start()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(w,err)
 	} else {
 		os.Exit(0);
 	}
