@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 )
 
 var db *sql.DB
@@ -84,6 +85,8 @@ func get(w http.ResponseWriter) {
 
 func post(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	if (Contains(r.UserAgent(), "Googlebot")) return
 
 	if r.FormValue("action") == "enter" {
 		var id int64
