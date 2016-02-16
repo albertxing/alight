@@ -55,7 +55,7 @@ func get(w http.ResponseWriter) {
 	}
 	result["counts"] = counts
 
-	lrows, err := db.Query("select count(city), city, country, iso from visitors natural join visits where visits.time > datetime('now', '-500 hours') group by city, iso;")
+	lrows, err := db.Query("select count(distinct vid), city, country, iso from visitors natural join visits where visits.time > datetime('now', '-500 hours') group by city, iso;")
 	if err != nil {
 		log.Fatal(err)
 	}
