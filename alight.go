@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/oschwald/geoip2-golang"
 	"log"
 	"net"
@@ -148,16 +147,6 @@ func geo(ipstring string) map[string]string {
 	}
 }
 
-func update(w http.ResponseWriter, r *http.Request) {
-	cmd := exec.Command("./update")
-	err := cmd.Start()
-	if err != nil {
-		fmt.Fprintln(w, err)
-	} else {
-		os.Exit(0);
-	}
-}
-
 func main() {
 	isNew := false
 
@@ -194,7 +183,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	http.HandleFunc("/update", update)
 	http.HandleFunc("/", handler)
 	http.ListenAndServe(":8000", nil)
 }
