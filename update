@@ -1,0 +1,2 @@
+#!/bin/sh
+sleep 2 && go get github.com/albertxing/alight && $GOPATH/bin/alight

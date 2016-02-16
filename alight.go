@@ -149,15 +149,8 @@ func geo(ipstring string) map[string]string {
 }
 
 func update(w http.ResponseWriter, r *http.Request) {
-	cmd := exec.Command("go", "get", "github.com/albertxing/alight")
+	cmd := exec.Command("update")
 	err := cmd.Start()
-	if err != nil {
-		fmt.Println(err)
-	}
-	cmd.Wait()
-
-	cmd = exec.Command("/home/albert/bin/alight")
-	err = cmd.Start()
 	if err != nil {
 		fmt.Println(err)
 	} else {
