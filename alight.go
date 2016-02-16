@@ -69,10 +69,10 @@ func get(w http.ResponseWriter) {
 
 		lrows.Scan(&count, &city, &country, &iso)
 		locations = append(locations, map[string]string{
-			"city": city,
+			"city":    city,
 			"country": country,
-			"iso": iso,
-			"count": count,
+			"iso":     iso,
+			"count":   count,
 		})
 	}
 	result["locations"] = locations
