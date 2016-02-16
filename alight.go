@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"strconv"
 )
 
@@ -147,6 +148,23 @@ func geo(ipstring string) map[string]string {
 	}
 }
 
+func update(w http.ResponseWriter, r *http.Request) {
+	cmd := exec.Command("go", "get", "github.com/albertxing/alight")
+	err := cmd.Start()
+	if err != nil {
+		fmt.Println(err)
+	}
+	cmd.Wait()
+
+	cmd = exec.Command("/home/albert/bin/alight")
+	err = cmd.Start()
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		os.Exit(0);
+	}
+}
+
 func main() {
 	isNew := false
 
@@ -183,6 +201,7 @@ func main() {
 		log.Fatal(err)
 	}
 
+	http.HandleFunc("/update", update)
 	http.HandleFunc("/", handler)
 	http.ListenAndServe(":8000", nil)
 }
