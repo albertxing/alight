@@ -1,9 +1,9 @@
 package main
 
 import (
-	"flag"
 	"database/sql"
 	"encoding/json"
+	"flag"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/oschwald/geoip2-golang"
@@ -154,7 +154,7 @@ func geo(ipstring string) map[string]string {
 }
 
 func main() {
-	var port = flag.String("port", 8000, "specifies the port number for the server to listen on")
+	var port = flag.Int("port", 8000, "specifies the port number for the server to listen on")
 	flag.Parse()
 
 	isNew := false
@@ -193,5 +193,5 @@ func main() {
 	}
 
 	http.HandleFunc("/", handler)
-	http.ListenAndServe(":" + *port, nil)
+	http.ListenAndServe(":"+strconv.Itoa(*port), nil)
 }
