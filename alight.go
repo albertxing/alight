@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -153,6 +154,9 @@ func geo(ipstring string) map[string]string {
 }
 
 func main() {
+	var port = flag.String("port", 8000, "specifies the port number for the server to listen on")
+	flag.Parse()
+
 	isNew := false
 
 	_, err := os.Open("./alight.db")
@@ -189,5 +193,5 @@ func main() {
 	}
 
 	http.HandleFunc("/", handler)
-	http.ListenAndServe(":8000", nil)
+	http.ListenAndServe(":" + *port, nil)
 }
