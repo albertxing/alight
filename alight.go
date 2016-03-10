@@ -155,6 +155,7 @@ func geo(ipstring string) map[string]string {
 
 func main() {
 	var port = flag.Int("port", 8000, "specifies the port number for the server to listen on")
+	var ssl = flag.Bool("ssl", false, "specifies SSL server")
 	flag.Parse()
 
 	isNew := false
@@ -193,5 +194,9 @@ func main() {
 	}
 
 	http.HandleFunc("/", handler)
-	http.ListenAndServe(":"+strconv.Itoa(*port), nil)
+	if *ssl {
+		http.ListenAndServeTLS(":"+strconv.Itoa(*port), "server.pem", "server.key", nil)
+	} else {
+		http.ListenAndServe(":"+strconv.Itoa(*port), nil)
+	}
 }
